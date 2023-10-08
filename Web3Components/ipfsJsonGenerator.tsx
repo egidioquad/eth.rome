@@ -17,6 +17,9 @@ import {
   ModalHeader,
   ModalOverlay,
   HStack,
+  FormControl,
+  FormLabel,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 
 import { UploadFileToIpfs, UploadJsonToIPFS } from "../utils/ipfsfunctions";
@@ -56,6 +59,15 @@ const IPFSJsonGenerator: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { account } = useContext(MetaMaskContext);
 
+  const bannerRef = useRef<HTMLInputElement | null>(null); // Initialize with null value
+
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => {
+    setIsOpen(false);
+  };
+  const [grantAmount, setGrantAmount] = useState("");
+
   const [proposalData, setProposalData] = useState<ProposalData>({
     name: "",
     surname: "",
@@ -84,7 +96,8 @@ const IPFSJsonGenerator: React.FC = () => {
   const generateJson = async () => {
     const jsonData = JSON.stringify(proposalData, null, 2);
 
-    console.log(jsonData);
+    console.log("json data", jsonData);
+    console.log(isOpen);
     // Upload JSON to IPFS using UploadJsonToIPFS
     const cid = await UploadJsonToIPFS(proposalData);
     console.log("CID:", cid);
@@ -103,27 +116,40 @@ const IPFSJsonGenerator: React.FC = () => {
   const handleImg = async (file: File, int: number) => {
     console.log("uploading");
     const cidImg = await UploadFileToIpfs(file);
+
     handleChangeWrapper(`imgCid${int}`, cidImg);
+    console.log("int", int);
+    if (int === 4) {
+      const ipfsGatewayUrl = `https://ipfs.io/ipfs/${cidImg}`;
+      setImageBlobBanner(ipfsGatewayUrl);
+    } else if (int === 3) {
+      const ipfsGatewayUrl = `https://gateway.pinata.cloud/ipfs/${cidImg}`;
+      setImageBlob(ipfsGatewayUrl);
+      console.log("imgBlobpfp", imageBlob);
+    }
+
+    return cidImg;
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>, int: number) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log("int inputchange", int);
       //setSelectedFile(file); // Set the selected file in state
       handleImg(file, int); // Call your handleImg function with the selected file
     }
   };
 
-  const openFileInput = () => {
-    inputRef.current?.click();
+  const handleGrantAmountChange = (e) => {
+    setGrantAmount(e.target.value);
   };
 
+  const openFileInput = () => {};
   return (
     <Flex
       flexDirection="column"
       width="100%"
       alignItems="start"
-      p={{ base: "50", md: "100" }}
       color="white"
       gap="10px"
       bg="black">
@@ -133,7 +159,9 @@ const IPFSJsonGenerator: React.FC = () => {
         height={{ base: "300px", sm: "400px", md: "500px", lg: "600px", xl: "600px" }}
         backgroundColor="rgba(217, 217, 217, 0.35)">
         <div
-          onDoubleClick={openFileInput}
+          onDoubleClick={(e) => {
+            bannerRef.current?.click();
+          }}
           style={{
             width: "100%",
             display: "flex",
@@ -143,13 +171,12 @@ const IPFSJsonGenerator: React.FC = () => {
           <input
             type="file"
             style={{ display: "none" }}
-            ref={inputRef}
-            onChange={(e) => {
+            ref={bannerRef}
+            onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                const cidImg = handleImg(file, 4);
-                const ipfsGatewayUrl = `https://ipfs.io/ipfs/${cidImg}`;
-                setImageBlobBanner(ipfsGatewayUrl);
+                const cidImg = await handleImg(file, 4);
+                console.log("pipppo tt");
               }
             }}
           />
@@ -206,12 +233,16 @@ const IPFSJsonGenerator: React.FC = () => {
             type="file"
             style={{ display: "none" }}
             ref={inputRef}
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
+              console.log("file", file);
               if (file) {
-                const cidImg = handleImg(file, 3);
-                const ipfsGatewayUrl = `https://ipfs.io/ipfs/${cidImg}`;
-                setImageBlob(ipfsGatewayUrl);
+                try {
+                  const cidImg = await handleImg(file, 3);
+                  console.log("cidImg", cidImg);
+                } catch (error) {
+                  console.error("Error handling the image:", error);
+                }
               }
             }}
           />
@@ -246,208 +277,224 @@ const IPFSJsonGenerator: React.FC = () => {
 
       {/* ------- */}
 
-      <Text fontSize="4xl" fontWeight="bold" mb={6}>
-        Create Your Profile
-      </Text>
-      <Grid templateColumns="repeat(2, 1fr)" gap={6} width="100%">
-        <div>
-          <Text mb={2}>Nome</Text>
-          <Input
-            type="text"
-            name="name"
-            placeholder="Mario"
+      <Box p={{ base: "50", md: "100" }} w="100%">
+        <Text fontSize="4xl" fontWeight="bold" mb={6}>
+          Create Your Profile
+        </Text>
+        <Grid templateColumns="repeat(2, 1fr)" gap={6} width="100%">
+          <div>
+            <Text mb={2}>Nome</Text>
+            <Input
+              type="text"
+              name="name"
+              placeholder="Mario"
+              onChange={handleChange}
+              borderRadius="50px"
+              borderColor="#B100EF"
+              backgroundColor="rgba(217, 217, 217, 0.35)"
+            />
+          </div>
+          <div>
+            <Text mb={2}>Cognome</Text>
+            <Input
+              type="text"
+              name="surname"
+              placeholder="Rossi"
+              onChange={handleChange}
+              borderRadius="50px"
+              backgroundColor="rgba(217, 217, 217, 0.35)"
+              borderColor="#B100EF"
+            />
+          </div>
+          <div>
+            <Text mb={2}>Username</Text>
+            <Input
+              type="text"
+              name="username"
+              placeholder="MarioR"
+              onChange={handleChange}
+              borderRadius="50px"
+              backgroundColor="rgba(217, 217, 217, 0.35)"
+              borderColor="#B100EF"
+            />
+          </div>
+          <div>
+            <Text mb={2}>Email</Text>
+            <Input
+              type="email"
+              name="email"
+              placeholder="mario.rossi@example.com"
+              onChange={handleChange}
+              borderRadius="50px"
+              backgroundColor="rgba(217, 217, 217, 0.35)"
+              borderColor="#B100EF"
+            />
+          </div>
+        </Grid>
+        <Text mb={2} mt={4}>
+          About You
+        </Text>
+        <Box style={{ position: "relative" }} width="100%">
+          <Textarea
+            name="about1"
+            placeholder="Present yourself..."
+            rows={3}
             onChange={handleChange}
-            borderRadius="50px"
-            borderColor="#B100EF"
+            borderRadius="30px"
             backgroundColor="rgba(217, 217, 217, 0.35)"
+            borderColor="#B100EF"
+            style={{
+              paddingLeft: "20px", // Adjust the left padding to move the placeholder to the right
+              paddingTop: "20px", // Adjust the left padding to move the placeholder to the right
+            }}
           />
-        </div>
-        <div>
-          <Text mb={2}>Cognome</Text>
-          <Input
-            type="text"
-            name="surname"
-            placeholder="Rossi"
+          <FaImage
+            // Replace 'FaIcon' with the actual icon component you're using
+            style={{
+              position: "absolute",
+              bottom: "10px",
+              right: "30px",
+              cursor: "pointer",
+              fontSize: "24px",
+            }}
+            onClick={openFileInput}
+          />
+          <input
+            type="file"
+            style={{ display: "none" }}
+            ref={inputRef}
+            onChange={(e) => handleFileInputChange(e, 1)}
+          />
+        </Box>
+        <Text mb={2} mt={4}>
+          About your project
+        </Text>
+        <Box style={{ position: "relative" }} width="100%">
+          <Textarea
+            name="about2"
+            placeholder="Talk about your project..."
+            rows={6}
             onChange={handleChange}
-            borderRadius="50px"
+            borderRadius="35px"
             backgroundColor="rgba(217, 217, 217, 0.35)"
             borderColor="#B100EF"
+            style={{
+              paddingLeft: "20px", // Adjust the left padding to move the placeholder to the right
+              paddingTop: "20px", // Adjust the left padding to move the placeholder to the right
+            }}
           />
-        </div>
-        <div>
-          <Text mb={2}>Username</Text>
-          <Input
-            type="text"
-            name="username"
-            placeholder="MarioR"
-            onChange={handleChange}
-            borderRadius="50px"
-            backgroundColor="rgba(217, 217, 217, 0.35)"
-            borderColor="#B100EF"
+          <FaImage
+            // Replace 'FaIcon' with the actual icon component you're using
+            style={{
+              position: "absolute",
+              bottom: "10px",
+              right: "30px",
+              cursor: "pointer",
+              fontSize: "24px",
+            }}
+            onClick={openFileInput}
           />
-        </div>
-        <div>
-          <Text mb={2}>Email</Text>
-          <Input
-            type="email"
-            name="email"
-            placeholder="mario.rossi@example.com"
-            onChange={handleChange}
-            borderRadius="50px"
-            backgroundColor="rgba(217, 217, 217, 0.35)"
-            borderColor="#B100EF"
+          <input
+            type="file"
+            style={{ display: "none" }}
+            ref={inputRef}
+            onChange={(e) => handleFileInputChange(e, 2)}
           />
-        </div>
-      </Grid>
-      
-      <Text mb={2} mt={4}>
-        About You
-      </Text>
-      <Box style={{ position: "relative" }} width="100%">
-        <Textarea
-          name="about1"
-          placeholder="Present yourself..."
-          rows={3}
+        </Box>
+        <Text mb={2} mt={4}>
+          Website
+        </Text>
+        <Input
+          type="text"
+          name="website"
+          placeholder="https://example.com"
           onChange={handleChange}
-          borderRadius="30px"
-          backgroundColor="rgba(217, 217, 217, 0.35)"
-          borderColor="#B100EF"
-          style={{
-            paddingLeft: '20px',  // Adjust the left padding to move the placeholder to the right
-            paddingTop: '20px',  // Adjust the left padding to move the placeholder to the right
-          }}
-        />
-        <FaImage
-          // Replace 'FaIcon' with the actual icon component you're using
-          style={{
-            position: "absolute",
-            bottom: "10px",
-            right: "30px",
-            cursor: "pointer",
-            fontSize: "24px",
-          }}
-          onClick={openFileInput}
-        />
-        <input
-          type="file"
-          style={{ display: "none" }}
-          ref={inputRef}
-          onChange={(e) => handleFileInputChange(e, 1)}
-        />
-      </Box>
-
-      <Text mb={2} mt={4}>
-        About your project
-      </Text>
-      <Box style={{ position: "relative" }} width="100%">
-        <Textarea
-          name="about2"
-          placeholder="Talk about your project..."
-          rows={6}
-          onChange={handleChange}
-          borderRadius="35px"
-          backgroundColor="rgba(217, 217, 217, 0.35)"
-          borderColor="#B100EF"
-          style={{
-            paddingLeft: '20px',  // Adjust the left padding to move the placeholder to the right
-            paddingTop: '20px',  // Adjust the left padding to move the placeholder to the right
-          }}
-        />
-        <FaImage
-          // Replace 'FaIcon' with the actual icon component you're using
-          style={{
-            position: "absolute",
-            bottom: "10px",
-            right: "30px",
-            cursor: "pointer",
-            fontSize: "24px",
-          }}
-          onClick={openFileInput}
-        />
-        <input
-          type="file"
-          style={{ display: "none" }}
-          ref={inputRef}
-          onChange={(e) => handleFileInputChange(e, 2)}
-        />
-      </Box>
-      <Text mb={2} mt={4}>
-        Website
-      </Text>
-      <Input
-        type="text"
-        name="website"
-        placeholder="https://example.com"
-        onChange={handleChange}
-        borderRadius="50px"
-        backgroundColor="rgba(217, 217, 217, 0.35)"
-        borderColor="#B100EF"
-      />
-
-      <Text mb={2} mt={4}>
-        Linkedin
-      </Text>
-      <Input
-        type="text"
-        name="linkedin"
-        placeholder="https://linkedin.com/in/..."
-        onChange={handleChange}
-        borderRadius="50px"
-        backgroundColor="rgba(217, 217, 217, 0.35)"
-        borderColor="#B100EF"
-      />
-
-      <Text mb={2} mt={4}>
-        X
-      </Text>
-      <Input
-        type="text"
-        name="X"
-        placeholder="X info..."
-        onChange={handleChange}
-        borderRadius="50px"
-        backgroundColor="rgba(217, 217, 217, 0.35)"
-        borderColor="#B100EF"
-      />
-      <HStack>
-        <Button
-          alignSelf="left"
-          mt={4}
           borderRadius="50px"
-          color="white"
-          fontSize="sm"
-          fontFamily="'Inter', sans-serif"
-          bg="linear-gradient(97.41deg, #1400FF 0%, #B100EF 100%)"
-          onClick={generateJson}>
-          SAVE PROFILE
-        </Button>
-        <Propose CID={cid} />
-      </HStack>
+          backgroundColor="rgba(217, 217, 217, 0.35)"
+          borderColor="#B100EF"
+        />
+        <Text mb={2} mt={4}>
+          Linkedin
+        </Text>
+        <Input
+          type="text"
+          name="linkedin"
+          placeholder="https://linkedin.com/in/..."
+          onChange={handleChange}
+          borderRadius="50px"
+          backgroundColor="rgba(217, 217, 217, 0.35)"
+          borderColor="#B100EF"
+        />
+        <Text mb={2} mt={4}>
+          X
+        </Text>
+        <Input
+          type="text"
+          name="X"
+          placeholder="X info..."
+          onChange={handleChange}
+          borderRadius="50px"
+          backgroundColor="rgba(217, 217, 217, 0.35)"
+          borderColor="#B100EF"
+        />
+        <HStack>
+          {!cid && (
+            <Button
+              alignSelf="left"
+              mt={4}
+              borderRadius="50px"
+              color="white"
+              fontSize="sm"
+              fontFamily="'Inter', sans-serif"
+              bg="linear-gradient(97.41deg, #1400FF 0%, #B100EF 100%)"
+              onClick={() => {
+                generateJson();
+                setIsOpen(true);
+              }}>
+              SAVE PROFILE
+            </Button>
+          )}
+        </HStack>
+      </Box>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent
+          bg="#131313"
+          mt="300"
+          textColor="white"
+          borderRadius="16px"
+          border="1px solid"
+          borderColor="#1400FF"
+          boxShadow="md 2 2 100px #1400FF">
+          <ModalHeader>Confirm Proposal</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Enter Grant Amount (wei)</FormLabel>
+              <Input
+                borderColor="#1400FF"
+                _hover={{ borderColor: "#867df5" }}
+                type="number"
+                placeholder="Enter the amount you want to receive"
+                value={grantAmount} // Bind the input value to the state
+                onChange={handleGrantAmountChange} // Call the handle function on change
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Propose
+              CID={cid}
+              grantAmount={Number(grantAmount)}
+              onClick={() => {
+                // Close the modal here
+                setIsOpen(false);
+              }}
+            />
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 };
 
 export default IPFSJsonGenerator;
-
-/* const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadingImage(true);
-      const logoUri = await UploadImageToIPFS(file);
-      setLogoUrl(logoUri);
-
-      // Retrieve image from IPFS
-      fetch(https://ipfs.infura.io:5001/api)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const objectURL = URL.createObjectURL(blob);
-          setImageSrc(objectURL);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch image from IPFS:", error);
-        });
-
-      setUploadingImage(false);
-    }
-  };
- */

@@ -20,28 +20,28 @@ import { ERC20ABI } from "../../utils/GrantHubABI";
 
 interface Web3ButtonProps {
   CID: string;
+  grantAmount: number;
+  onClick?: () => void;
 }
 const CONTRACT_ADDRESS = "0x9aa70da7902eb50342a0337c0721b8a51f1dfe7c";
 
-
-
-const Propose: React.FC<Web3ButtonProps> = ({  CID }) => {
-  console.log("Cid ricevuto" + CID)
+const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
+  console.log("Cid ricevuto" + CID);
   const [isOpen, setIsOpen] = useState(false);
   const [tokenAddress, setTokenAddress] = useState("");
-const signer = useContext(MetaMaskContext).signer;
-const provider = useContext(MetaMaskContext).provider;
-  const [grantAmount, setGrantAmount] = useState("");
+  const signer = useContext(MetaMaskContext).signer;
+  const provider = useContext(MetaMaskContext).provider;
+  const account = useContext(MetaMaskContext);
+  //const [grantAmount, setGrantAmount] = useState("");
   const [description, setDescription] = useState("");
   useEffect(() => {
     if (CID) {
       setDescription(CID);
     }
-  }
-  , [CID]);
-  
+  }, [CID]);
 
   const propose = async () => {
+    console.log(account);
     try {
       const tokenAddress = "0xFEd4CEB5D41d426e0f95f5D6e28c664B2b3f8Fd6";
       const token = new ethers.Contract(tokenAddress, ERC20ABI, signer);
@@ -50,18 +50,23 @@ const provider = useContext(MetaMaskContext).provider;
         teamAddress,
         grantAmount,
       ]);
-  
+
       const targets = [tokenAddress];
       const values = [0];
       const calldatas = [transferCalldata];
-  
+
       const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
 
-      const data = contract.interface.encodeFunctionData("propose", [targets, values, calldatas, description]);
-  
+      const data = contract.interface.encodeFunctionData("propose", [
+        targets,
+        values,
+        calldatas,
+        description,
+      ]);
+
       const tx = await signer.sendTransaction({
         to: CONTRACT_ADDRESS,
-        data
+        data,
       });
       const receipt = await tx.wait();
       console.log("Receipt: ", receipt.confirmations);
@@ -78,20 +83,28 @@ const provider = useContext(MetaMaskContext).provider;
       console.error("Error in proposing:", error);
     }
   };
-  
-  
 
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
 
-
-  
   useEffect(() => {
     const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
-  
+
     // Listen for ProposalCreated events
-    const listener = contract.on("ProposalCreated", (proposalId, proposer, targets, values, signatures, calldatas, voteStart, voteEnd, description) => {
-      console.log(`Proposal Created: 
+    const listener = contract.on(
+      "ProposalCreated",
+      (
+        proposalId,
+        proposer,
+        targets,
+        values,
+        signatures,
+        calldatas,
+        voteStart,
+        voteEnd,
+        description
+      ) => {
+        console.log(`Proposal Created: 
         - Proposal ID: ${proposalId}
         - Proposer: ${proposer}
         - Targets: ${targets}
@@ -101,32 +114,42 @@ const provider = useContext(MetaMaskContext).provider;
         - Vote Start: ${voteStart}
         - Vote End: ${voteEnd}
         - Description: ${description}`);
-    });
-  console.log("Listener: ", listener);  
+      }
+    );
+    console.log("Listener: ", listener);
     // Cleanup listener when component is unmounted
     return () => {
       contract.removeAllListeners("ProposalCreated");
-
     };
   }, []);
-  
-  // ...rest of your code
-  
 
-  
+  // ...rest of your code
+
+  const handleProposeClick = () => {
+    // Perform your propose logic here
+    if (onClick) {
+      onClick(); // Call the onClick handler if it's provided
+    }
+  };
 
   return (
     <>
-      <Button 
-        onClick={onOpen}
+      <Button
+        onClick={async () => {
+          // onOpen();
+          await propose();
+          handleProposeClick();
+          window.location.href = `http://localhost:3000/profile/${account.account}`;
+        }}
         borderRadius="50px"
+        _hover={{ bg: "#796efa" }}
         bg="linear-gradient(93.48deg, #1400FF 0%, #B100EF 100%)"
         color="white"
         marginTop="20px"
-        marginLeft="5px"
+        // marginLeft="5px"
         // ml="70px"
-        fontSize="15px"
-        height="38px"
+        //   height="38px"
+        fontSize="sm"
         width="130px"
         alignSelf="left"
         mt={4}
@@ -139,7 +162,6 @@ const provider = useContext(MetaMaskContext).provider;
           <ModalHeader>Propose</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-         
             <FormControl>
               <FormLabel>Grant Amount</FormLabel>
               <Input
@@ -148,7 +170,6 @@ const provider = useContext(MetaMaskContext).provider;
                 onChange={(e) => setGrantAmount(e.target.value)}
               />
             </FormControl>
-           
           </ModalBody>
           <ModalFooter>
             <Button colorScheme="blue" onClick={propose}>

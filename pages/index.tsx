@@ -27,7 +27,7 @@ import {EmailsSection} from '../components/EmailSection';
 const HomePage = () => {
   return (
     <>
-   <Flex flexDirection="column" alignItems="center" justifyContent="center">
+      <Flex flexDirection="column" alignItems="center" justifyContent="center">
       <Header />
       <PromoSection />
       <PinkSection />
