@@ -71,9 +71,9 @@ export const Header = () => {
             onClick={() => (window.location.href = "http://localhost:3000/explore")}>
             Explore
           </Text>
-          <Box mr={6} ml={6} _hover={{ color: "purple" }} display={{ base: "none", md: "block" }}>
+          {/*           <Box mr={6} ml={6} _hover={{ color: "purple" }} display={{ base: "none", md: "block" }}>
             <Text cursor="pointer">About</Text>
-          </Box>
+          </Box> */}
           <Box
             mr={6}
             ml={6}
