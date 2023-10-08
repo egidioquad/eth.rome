@@ -27,7 +27,8 @@ export const JoinUsSection = () => {
           borderRadius={20}
           textColor={"white"}
           bg="#1400FF"
-          _hover={{ bg: "#131313" }}>
+          _hover={{ bg: "#131313" }}
+          onClick={() => (window.location.href = "http://localhost:3000/createProfile")}>
           GET STARTED
         </Button>
         <Button

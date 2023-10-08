@@ -38,7 +38,7 @@ function SupportModal({ isOpen, onRequestClose, onSupport }) {
               color="white"
               _hover={{ backgroundColor: "purple.800" }}
               backgroundColor="purple"
-              onClick={() => onSupport(0)}
+              onClick={() => onSupport(1)}
               borderRadius="10px">
               Support
             </Button>
@@ -50,7 +50,7 @@ function SupportModal({ isOpen, onRequestClose, onSupport }) {
               Oppose
             </Button> */}
             <Button
-              onClick={() => onSupport(1)}
+              onClick={() => onSupport(2)}
               color="white"
               _hover={{ backgroundColor: "purple.800" }}
               backgroundColor="purple.500"

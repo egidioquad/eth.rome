@@ -87,41 +87,41 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
 
-  useEffect(() => {
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
-
-    // Listen for ProposalCreated events
-    const listener = contract.on(
-      "ProposalCreated",
-      (
-        proposalId,
-        proposer,
-        targets,
-        values,
-        signatures,
-        calldatas,
-        voteStart,
-        voteEnd,
-        description
-      ) => {
-        console.log(`Proposal Created: 
-        - Proposal ID: ${proposalId}
-        - Proposer: ${proposer}
-        - Targets: ${targets}
-        - Values: ${values}
-        - Signatures: ${signatures}
-        - Calldatas: ${calldatas}
-        - Vote Start: ${voteStart}
-        - Vote End: ${voteEnd}
-        - Description: ${description}`);
-      }
-    );
-    console.log("Listener: ", listener);
-    // Cleanup listener when component is unmounted
-    return () => {
-      contract.removeAllListeners("ProposalCreated");
-    };
-  }, []);
+ // useEffect(() => {
+ //   const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
+//
+ //   // Listen for ProposalCreated events
+ //   const listener = contract.on(
+ //     "ProposalCreated",
+ //     (
+ //       proposalId,
+ //       proposer,
+ //       targets,
+ //       values,
+ //       signatures,
+ //       calldatas,
+ //       voteStart,
+ //       voteEnd,
+ //       description
+ //     ) => {
+ //       console.log(`Proposal Created: 
+ //       - Proposal ID: ${proposalId}
+ //       - Proposer: ${proposer}
+ //       - Targets: ${targets}
+ //       - Values: ${values}
+ //       - Signatures: ${signatures}
+ //       - Calldatas: ${calldatas}
+ //       - Vote Start: ${voteStart}
+ //       - Vote End: ${voteEnd}
+ //       - Description: ${description}`);
+ //     }
+ //   );
+ //   console.log("Listener: ", listener);
+ //   // Cleanup listener when component is unmounted
+ //   return () => {
+ //     contract.removeAllListeners("ProposalCreated");
+ //   };
+ // }, []);
 
   // ...rest of your code
 
@@ -136,10 +136,14 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
     <>
       <Button
         onClick={async () => {
-          // onOpen();
-          await propose();
-          handleProposeClick();
-          window.location.href = `http://localhost:3000/profile/${account.account}`;
+          try {
+            await propose();
+            handleProposeClick();
+          } catch (error) {
+            console.error(error);
+          } finally {
+            window.location.href = `http://localhost:3000/profile/${account.account}`;
+          }
         }}
         borderRadius="50px"
         _hover={{ bg: "#796efa" }}
@@ -156,28 +160,6 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
         fontFamily="'Inter', sans-serif">
         PROPOSE
       </Button>
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Propose</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Grant Amount</FormLabel>
-              <Input
-                type="number"
-                placeholder="Enter grant amount"
-                onChange={(e) => setGrantAmount(e.target.value)}
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" onClick={propose}>
-              Confirm Transaction
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </>
   );
 };

@@ -53,13 +53,15 @@ const IPFSJsonGenerator: React.FC = () => {
   const provider = useContext(MetaMaskContext).provider;
   const [cid, setCid] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  //const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageBlob, setImageBlob] = useState<string | null>(null);
   const [imageBlobBanner, setImageBlobBanner] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { account } = useContext(MetaMaskContext);
 
-  const bannerRef = useRef<HTMLInputElement | null>(null); // Initialize with null value
+  const bannerRef = useRef<HTMLInputElement | null>(null);
+  const pfpRef = useRef<HTMLInputElement | null>(null);
+
+  const abt1Ref = useRef<HTMLInputElement | null>(null);
+  const abt2Ref = useRef<HTMLInputElement | null>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const onOpen = () => setIsOpen(true);
@@ -115,16 +117,17 @@ const IPFSJsonGenerator: React.FC = () => {
 
   const handleImg = async (file: File, int: number) => {
     console.log("uploading");
-    const cidImg = await UploadFileToIpfs(file);
+    let cidImg = await UploadFileToIpfs(file);
 
     handleChangeWrapper(`imgCid${int}`, cidImg);
     console.log("int", int);
     if (int === 4) {
       const ipfsGatewayUrl = `https://ipfs.io/ipfs/${cidImg}`;
       setImageBlobBanner(ipfsGatewayUrl);
+      console.log("imgBlobpbanner", imageBlob);
     } else if (int === 3) {
-      const ipfsGatewayUrl = `https://gateway.pinata.cloud/ipfs/${cidImg}`;
-      setImageBlob(ipfsGatewayUrl);
+      const ipfsGatewayUrlpfp = `https://ipfs.io/ipfs/${cidImg}`;
+      await setImageBlob(ipfsGatewayUrlpfp);
       console.log("imgBlobpfp", imageBlob);
     }
 
@@ -144,7 +147,12 @@ const IPFSJsonGenerator: React.FC = () => {
     setGrantAmount(e.target.value);
   };
 
-  const openFileInput = () => {};
+  const multiplyBy10ToThe18 = () => {
+    // Parse the current value as a number and multiply by 10^18
+    const newValue = parseFloat(grantAmount) * Math.pow(10, 18);
+    setGrantAmount(newValue.toString());
+  };
+
   return (
     <Flex
       flexDirection="column"
@@ -175,8 +183,7 @@ const IPFSJsonGenerator: React.FC = () => {
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                const cidImg = await handleImg(file, 4);
-                console.log("pipppo tt");
+                await handleImg(file, 4);
               }
             }}
           />
@@ -220,7 +227,9 @@ const IPFSJsonGenerator: React.FC = () => {
         left={{ base: "30px	", sm: "50px", md: "70px", lg: "100px", xl: "100px" }}
         backgroundColor="#D9D9D9">
         <div
-          onDoubleClick={openFileInput}
+          onDoubleClick={(e) => {
+            pfpRef.current?.click();
+          }}
           style={{
             width: "100%",
             overflow: "hidden",
@@ -232,29 +241,17 @@ const IPFSJsonGenerator: React.FC = () => {
           <input
             type="file"
             style={{ display: "none" }}
-            ref={inputRef}
+            ref={pfpRef}
             onChange={async (e) => {
               const file = e.target.files?.[0];
-              console.log("file", file);
               if (file) {
-                try {
-                  const cidImg = await handleImg(file, 3);
-                  console.log("cidImg", cidImg);
-                } catch (error) {
-                  console.error("Error handling the image:", error);
-                }
+                await handleImg(file, 3);
               }
             }}
           />
 
           {imageBlob ? (
-            <ChakraImage
-              objectFit="cover"
-              src={imageBlob}
-              alt="Uploaded Image"
-              width="400px"
-              borderRadius="100%"
-            />
+            <ChakraImage objectFit="cover" src={imageBlob} width="400px" borderRadius="100%" />
           ) : (
             <Box
               objectFit="cover"
@@ -357,12 +354,14 @@ const IPFSJsonGenerator: React.FC = () => {
               cursor: "pointer",
               fontSize: "24px",
             }}
-            onClick={openFileInput}
+            onClick={(e) => {
+              abt1Ref.current?.click();
+            }}
           />
           <input
             type="file"
             style={{ display: "none" }}
-            ref={inputRef}
+            ref={abt1Ref}
             onChange={(e) => handleFileInputChange(e, 1)}
           />
         </Box>
@@ -392,12 +391,14 @@ const IPFSJsonGenerator: React.FC = () => {
               cursor: "pointer",
               fontSize: "24px",
             }}
-            onClick={openFileInput}
+            onClick={(e) => {
+              abt2Ref.current?.click();
+            }}
           />
           <input
             type="file"
             style={{ display: "none" }}
-            ref={inputRef}
+            ref={abt2Ref}
             onChange={(e) => handleFileInputChange(e, 2)}
           />
         </Box>
@@ -438,7 +439,7 @@ const IPFSJsonGenerator: React.FC = () => {
           borderColor="#B100EF"
         />
         <HStack>
-          {!cid && (
+         
             <Button
               alignSelf="left"
               mt={4}
@@ -447,6 +448,7 @@ const IPFSJsonGenerator: React.FC = () => {
               fontSize="sm"
               fontFamily="'Inter', sans-serif"
               bg="linear-gradient(97.41deg, #1400FF 0%, #B100EF 100%)"
+              _hover={{ borderColor: "#867df5" }}
               onClick={() => {
                 generateJson();
                 setIsOpen(true);
@@ -471,14 +473,27 @@ const IPFSJsonGenerator: React.FC = () => {
           <ModalBody>
             <FormControl>
               <FormLabel>Enter Grant Amount (wei)</FormLabel>
-              <Input
-                borderColor="#1400FF"
-                _hover={{ borderColor: "#867df5" }}
-                type="number"
-                placeholder="Enter the amount you want to receive"
-                value={grantAmount} // Bind the input value to the state
-                onChange={handleGrantAmountChange} // Call the handle function on change
-              />
+              <HStack>
+                <Input
+                  borderColor="#1400FF"
+                  borderRadius="16px"
+                  _hover={{ borderColor: "#867df5" }}
+                  type="number"
+                  placeholder="Enter the amount you want to receive"
+                  value={grantAmount} // Bind the input value to the state
+                  onChange={handleGrantAmountChange} // Call the handle function on change
+                />
+                <Button
+                  onClick={multiplyBy10ToThe18}
+                  bg="transparent"
+                  _hover={{ borderColor: "#867df5" }}
+                  color="white"
+                  border="1px solid"
+                  borderColor="#1400FF"
+                  borderRadius="16px">
+                  x10^18
+                </Button>
+              </HStack>
             </FormControl>
           </ModalBody>
           <ModalFooter>

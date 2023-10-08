@@ -7,6 +7,7 @@ export const PromoSection = () => {
       color="white"
       py={16}
       width="100%"
+      marginTop="20"
       height={{ base: "0px", sm: "700px", md: "800px", lg: "1000px", xl: "1200px" }}
       mb={{ base: "-100px" }}
       minHeight="500px"

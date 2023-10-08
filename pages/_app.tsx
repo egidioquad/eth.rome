@@ -3,10 +3,10 @@ import { ChakraProvider, Button, Input, Flex, Box, IconButton, Tooltip } from "@
 import { Web3Provider } from "@ethersproject/providers";
 import { ethers } from "ethers";
 import "../index.d.ts";
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import '@rainbow-me/rainbowkit/styles.css'
-import { WagmiConfig } from 'wagmi'
-import { chains, wagmiConfig } from './providers'
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import "@rainbow-me/rainbowkit/styles.css";
+import { WagmiConfig } from "wagmi";
+import { chains, wagmiConfig } from "./providers";
 
 export const MetaMaskContext = createContext<{
   account: string | null;
@@ -39,6 +39,7 @@ function MyApp({ Component, pageProps }) {
         setSigner(signerInstance);
         const connectedAccount = await signerInstance.getAddress();
         setAccount(connectedAccount);
+        console.log("account set:", account);
       } catch (error) {
         console.error("Errore nel collegamento a MetaMask:", error);
       }

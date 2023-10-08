@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   Avatar,
   Box,
@@ -33,6 +33,7 @@ import {
   FaUserCircle,
   FaXRay,
   FaXbox,
+  FaTwitter,
 } from "react-icons/fa";
 
 import { Header } from "../components/Header"; // Importa il tuo componente header
@@ -47,27 +48,29 @@ import BannerImageUploader from "./BannerImageUploader";
 import PicBannerImg from "../components/PicBannerImg";
 import { EmailsSection } from "../components/EmailSection";
 import VoteButton from "../Web3Components/web3Buttons/VoteButton";
-
-const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: number }> = ({
-  provider,
-  WalletAddress,
-  chainId,
-}) => {
-  const [proposalId, setProposalId] = useState("");
-  useEffect(() => {
-    const urlP = new URLSearchParams(window.location.search);
-    const myParam = urlP.get("proposalId");
-    console.log("PIPPO", myParam);
-    setProposalId(myParam);
-  }, []);
+import { MetaMaskContext } from "../pages/_app";
+import { ethers } from "ethers";
+import { GrantHubABI as contractAbi } from "../utils/GrantHubABI";
+//import { useParams } from "react-router-dom";
+const ProfilePage: React.FC<{
+  provider: any;
+  CID: string;
+  chainId: number;
+  proposalId: string;
+}> = ({ provider, CID, chainId, proposalId }) => {
+  const [isClient, setIsClient] = useState(false);
+  //const [proposalId, setProposalId] = useState("");
   const [file, setFile] = useState<any | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
-  //  const [showModal, setShowModal] = useState(false);
   const inputRef = useRef(null);
   const [ipfsRes, setipfsRes] = useState(IpfsData);
-
   const acceptTypes = "image/jpeg, image/png";
-
+  const CONTRACT_ADDRESS = "0x9aa70da7902eb50342a0337c0721b8a51f1dfe7c";
+  const [forVotes, setVotes] = useState("");
+  const [deadline, setDeadline] = useState("");
+  // const { walletAddressUrl } = useParams();
+  //const provider = useContext(MetaMaskContext);
+  const account = useContext(MetaMaskContext);
   console.log("IpfsData" + JSON.stringify(ipfsRes));
   const { getRootProps, getInputProps } = useDropzone({
     accept: acceptTypes,
@@ -82,27 +85,57 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
       }
     },
   });
-
-  console.log("WalletAddress" + WalletAddress);
-  console.log("chainId" + chainId);
   const [isOpen, setIsOpen] = useState(false);
+  console.log("chainId" + chainId);
 
   const handleModalOpen = () => {
     setIsOpen(true);
   };
+  /* 
+  useEffect(() => {
+    const urlP = new URLSearchParams(window.location.search);
+    const myParam = urlP.get("proposalId");
+    console.log("PIPPO", myParam);
+    setProposalId(myParam);
+  }, []); */
+
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi, provider); /// 										CONTRACT TINGS
+  async function getProposalVotes() {
+    try {
+      //  console.log(walletAddressUrl);
+      const result = await contract.proposalVotes(proposalId);
+      const time = await contract.proposalDeadline(proposalId);
+      const days = time / BigInt(86400);
+      const dd = days.toString();
+      setDeadline(dd);
+      console.log("time", time);
+      // The result is an object with the three uint8 values
+      setVotes(result[1]);
+      console.log("otes", forVotes);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
 
   useEffect(() => {
+    console.log("prop id", proposalId);
+    getProposalVotes();
     // declare the async data fetching function
     const fetchData = async () => {
       // get the data from the api
-      const data = await fetch(
-        "https://gateway.pinata.cloud/ipfs/QmaLi97ZbybH99w6T8FDnG3bzpNLVowAvmzL7GRaz7Wu7i"
-      );
-      // convert the data to json
-      const json = await data.json();
-      console.log("json", json);
-      // set state with the result
-      setipfsRes(json);
+      console.log("prefetch, cid:", CID);
+      const data = await fetch(`http://127.0.0.1:8080/ipfs/${CID}`);
+
+      setTimeout(async () => {
+        if (!data.ok) {
+          console.log("data:", data);
+        }
+        // convert the data to json
+        const json = await data.json();
+        console.log("ipfs data jsone", json);
+        // set state with the result
+        setipfsRes(json);
+      }, 1000);
     };
 
     // call the function
@@ -111,11 +144,16 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
   return (
     <>
-      <Box position="fixed" zIndex="234323" top="0" width="100%">
-        <Header />
-      </Box>
+      <Header />
       {/* BANNER IMAGE */}
       <Box
         width="100%"
@@ -130,7 +168,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
           }}>
           {ipfsRes.imgCid4 ? (
             <ChakraImage
-              src={ipfsRes.imgCid4}
+              src={`http://127.0.0.1:8080/ipfs/${ipfsRes.imgCid4}`}
               alt="Uploaded Image"
               width="100%"
               height="540px"
@@ -180,8 +218,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
           {ipfsRes.imgCid3 ? (
             <ChakraImage
               objectFit="cover"
-              src={ipfsRes.imgCid3}
-              alt="Uploaded Image"
+              src={`http://127.0.0.1:8080/ipfs/${ipfsRes.imgCid3}`}
               width="400px"
               borderRadius="100%"
             />
@@ -216,7 +253,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
           fontFamily="'Inter', sans-serif"
           bg="linear-gradient(97.41deg, #1400FF 0%, #B100EF 100%)"
           position="absolute"
-          left="70%"
+          left={{ base: "70%", lg: "50%" }}
           zIndex="2"
           top={{ base: "300px", sm: "400px", md: "500px", lg: "600px" }}
           mr={40}
@@ -261,22 +298,15 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
               fontFamily="'Inter', sans-serif">
               <Icon as={FaWallet} />
-              <div>{ipfsRes.wallet}</div>
+              <div>{account.account}</div>
             </Text>
+
             <Text
               as={HStack}
               padding="10px"
               fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
               fontFamily="'Inter', sans-serif">
-              <Icon as={FaGithub} />
-              <div>{ipfsRes.Github}</div>
-            </Text>
-            <Text
-              as={HStack}
-              padding="10px"
-              fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
-              fontFamily="'Inter', sans-serif">
-              <Icon as={FaXbox} />
+              <Icon as={FaTwitter} />
               <div>{ipfsRes.X}</div>
             </Text>
             {/*    <Text
@@ -295,25 +325,25 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               <Icon as={FaGlobe} />
               <div>{ipfsRes.website}</div>
             </Text>
-            {/*   <Text
-              as={HStack}
-              padding="10px"
-              fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
-              fontFamily="'Inter', sans-serif">
-              <Icon as={FaLinkedin} />
-              <div>{"LinkedIn: " + IpfsData.linkedin}</div>
-            </Text> */}
             <Text
               as={HStack}
               padding="10px"
               fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
               fontFamily="'Inter', sans-serif">
-              <Icon as={FaHashtag} />
-              <div>{"Other Links: " + ipfsRes.other_links}</div>
+              <Icon as={FaLinkedin} />
+              <div>{ipfsRes.linkedin}</div>
             </Text>
+            {/* <Text
+              as={HStack}
+              padding="10px"
+              fontSize={{ base: "sm", sm: "md", md: "lg", lg: "lg", xl: "lg" }}
+              fontFamily="'Inter', sans-serif">
+              <Icon as={FaHashtag} />
+              <div>{ipfsRes.other_links}</div>            </Text>
+ */}
           </VStack>
           <VStack
-            mb={{ base: "28px" }}
+            mb={{ base: "225px" }}
             position="relative"
             backgroundColor="black"
             color="white"
@@ -347,7 +377,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               fontSize="64px"
               lineHeight="77px"
               color="#FFFFFF">
-              124
+              {forVotes.toString()}
             </Text>
             <Text
               fontFamily="'Inter'"
@@ -364,7 +394,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               fontSize="64px"
               lineHeight="77px"
               color="#FFFFFF">
-              2 days
+              {deadline.toString()} days
             </Text>
             <Text
               fontFamily="'Inter'"
@@ -410,7 +440,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               {/* Seconda griglia: Immagine con borderRadius in alto a destra */}
               <Box borderTopRightRadius="100px" width="100%">
                 {ipfsRes.imgCid1 ? (
-                  <Image src="ipfsRes.imgCid1" />
+                  <Image src={`http://127.0.0.1:8080/ipfs/${ipfsRes.imgCid1}`} />
                 ) : (
                   <span
                     style={{
@@ -434,7 +464,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
               {/* Terza griglia: Immagine con borderRadius in basso a sinistra */}
               <Box order={{ base: 2, lg: 1 }}>
                 {ipfsRes.imgCid2 ? (
-                  <Image src="ipfsRes.imgCid2" />
+                  <Image src={`http://127.0.0.1:8080/ipfs/${ipfsRes.imgCid2}`} />
                 ) : (
                   <span
                     style={{
@@ -478,10 +508,10 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
           color="white"
           position="relative"
           top="-30px">
-          <Heading as="h3" size="2xl" pl="30px">
+          {/*
+					<Heading as="h3" size="2xl" pl="30px">
             Top Voters
-          </Heading>
-          <Grid
+          </Heading> <Grid
             templateColumns="repeat(2, 1fr)"
             gap={9}
             width="100%"
@@ -506,7 +536,7 @@ const ProfilePage: React.FC<{ provider: any; WalletAddress: string; chainId: num
                 </VStack>
               </Box>
             ))}
-          </Grid>
+          </Grid> */}
         </VStack>
       </VStack>
       <Box bg="black" align="center" pt="20" justifyContent="center" h="200">
