@@ -87,41 +87,41 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
 
- // useEffect(() => {
- //   const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
-//
- //   // Listen for ProposalCreated events
- //   const listener = contract.on(
- //     "ProposalCreated",
- //     (
- //       proposalId,
- //       proposer,
- //       targets,
- //       values,
- //       signatures,
- //       calldatas,
- //       voteStart,
- //       voteEnd,
- //       description
- //     ) => {
- //       console.log(`Proposal Created: 
- //       - Proposal ID: ${proposalId}
- //       - Proposer: ${proposer}
- //       - Targets: ${targets}
- //       - Values: ${values}
- //       - Signatures: ${signatures}
- //       - Calldatas: ${calldatas}
- //       - Vote Start: ${voteStart}
- //       - Vote End: ${voteEnd}
- //       - Description: ${description}`);
- //     }
- //   );
- //   console.log("Listener: ", listener);
- //   // Cleanup listener when component is unmounted
- //   return () => {
- //     contract.removeAllListeners("ProposalCreated");
- //   };
- // }, []);
+  // useEffect(() => {
+  //   const contract = new ethers.Contract(CONTRACT_ADDRESS, GrantHubABI, signer);
+  //
+  //   // Listen for ProposalCreated events
+  //   const listener = contract.on(
+  //     "ProposalCreated",
+  //     (
+  //       proposalId,
+  //       proposer,
+  //       targets,
+  //       values,
+  //       signatures,
+  //       calldatas,
+  //       voteStart,
+  //       voteEnd,
+  //       description
+  //     ) => {
+  //       console.log(`Proposal Created:
+  //       - Proposal ID: ${proposalId}
+  //       - Proposer: ${proposer}
+  //       - Targets: ${targets}
+  //       - Values: ${values}
+  //       - Signatures: ${signatures}
+  //       - Calldatas: ${calldatas}
+  //       - Vote Start: ${voteStart}
+  //       - Vote End: ${voteEnd}
+  //       - Description: ${description}`);
+  //     }
+  //   );
+  //   console.log("Listener: ", listener);
+  //   // Cleanup listener when component is unmounted
+  //   return () => {
+  //     contract.removeAllListeners("ProposalCreated");
+  //   };
+  // }, []);
 
   // ...rest of your code
 
@@ -139,10 +139,11 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
           try {
             await propose();
             handleProposeClick();
+            setTimeout(() => {
+              window.location.href = `http://localhost:3000/profile/${account.account}`;
+            }, 9000); // Replace 5000 with the desired delay in milliseconds (5 seconds in this example)
           } catch (error) {
             console.error(error);
-          } finally {
-            window.location.href = `http://localhost:3000/profile/${account.account}`;
           }
         }}
         borderRadius="50px"
