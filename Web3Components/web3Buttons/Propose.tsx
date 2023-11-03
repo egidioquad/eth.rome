@@ -141,7 +141,7 @@ const Propose: React.FC<Web3ButtonProps> = ({ CID, grantAmount, onClick }) => {
             handleProposeClick();
             setTimeout(() => {
               window.location.href = `http://localhost:3000/profile/${account.account}`;
-            }, 9000); // Replace 5000 with the desired delay in milliseconds (5 seconds in this example)
+            }, 15000); // Replace 5000 with the desired delay in milliseconds (5 seconds in this example)
           } catch (error) {
             console.error(error);
           }
